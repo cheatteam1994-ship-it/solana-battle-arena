@@ -19,8 +19,8 @@ let countdown = 0;
 let countdownInterval;
 
 // CONFIG API SOLANA (Helius)
-const API_KEY = 'LA_TUA_API_KEY';  // Inserisci qui la tua API Key
-const TOKEN_ADDRESS = 'INDIRIZZO_DEL_TUO_TOKEN'; // Inserisci qui il tuo token
+const API_KEY = '86cece6e-0608-40c1-9b6f-e44ef8764a4f';  // Inserisci qui la tua API Key
+const TOKEN_ADDRESS = 'F6sFmPHVHbw3daG4SNX8BMuQ6W5sYsKmrYTvpZTupump'; // Inserisci qui il tuo token
 const HELIUS_API_URL = `https://api.helius.xyz/v0/tokens/${TOKEN_ADDRESS}/holders`;
 
 // PLAYER
@@ -256,3 +256,4 @@ window.addEventListener("resize", () => {
     canvas.width = container.clientWidth;
     canvas.height = container.clientHeight;
 });
+
