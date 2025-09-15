@@ -18,6 +18,11 @@ let roundStartTime = Date.now();
 let countdown = 0;
 let countdownInterval;
 
+// CONFIG API SOLANA (Helius)
+const API_KEY = '86cece6e-0608-40c1-9b6f-e44ef8764a4f';  // Inserisci qui la tua API Key
+const TOKEN_ADDRESS = 'F6sFmPHVHbw3daG4SNX8BMuQ6W5sYsKmrYTvpZTupump'; // Inserisci qui il tuo token
+const HELIUS_API_URL = `https://api.helius.xyz/v0/tokens/${TOKEN_ADDRESS}/holders`;
+
 // PLAYER
 class Player {
     constructor(wallet) {
@@ -42,6 +47,7 @@ class Player {
         this.x += this.vx;
         this.y += this.vy;
 
+        // rimbalzo sui bordi
         if (this.x < this.radius || this.x > canvas.width - this.radius) this.vx *= -1;
         if (this.y < this.radius || this.y > canvas.height - this.radius) this.vy *= -1;
     }
@@ -152,6 +158,55 @@ function startRound() {
 
 startRound();
 
+// FUNZIONE PER OTTENERE HOLDERS DA SOLANA
+async function fetchNewHolders() {
+    try {
+        const response = await fetch(HELIUS_API_URL, {
+            headers: {
+                'X-API-KEY': API_KEY
+            }
+        });
+
+        if (!response.ok) throw new Error('Errore nella richiesta API');
+
+        const data = await response.json();
+        const newHolders = data.data.items.map(item => ({ wallet: item.owner }));
+
+        const existingWallets = holders.map(h => h.wallet);
+        const actuallyNew = newHolders.filter(h => !existingWallets.includes(h.wallet));
+
+        holders.push(...actuallyNew);
+
+        if (actuallyNew.length > 0) {
+            document.getElementById("winnerDisplay").textContent += 
+            ` | Nuovi partecipanti: ${actuallyNew.length}`;
+        }
+
+    } catch (error) {
+        console.error('Errore durante il recupero degli holders:', error);
+    }
+}
+
+// COUNTDOWN PER NUOVO ROUND
+function startCountdown() {
+    countdown = 180; // 3 minuti
+    document.getElementById("winnerDisplay").textContent += ` | Nuovo round in ${countdown} s`;
+
+    countdownInterval = setInterval(() => {
+        countdown--;
+        document.getElementById("winnerDisplay").textContent = `Nuovo round in ${countdown} s`;
+
+        if (countdown === 175) { // subito dopo inizio countdown
+            fetchNewHolders();
+        }
+
+        if (countdown <= 0) {
+            clearInterval(countdownInterval);
+            startRound();
+        }
+    }, 1000);
+}
+
 // GAME LOOP
 function animate() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -192,25 +247,6 @@ function animate() {
     }
 
     requestAnimationFrame(animate);
-}
-
-// COUNTDOWN PER NUOVO ROUND
-function startCountdown() {
-    countdown = 180; // 3 minuti
-    document.getElementById("winnerDisplay").textContent += ` - Nuovo round in ${countdown} s`;
-
-    countdownInterval = setInterval(() => {
-        countdown--;
-        document.getElementById("winnerDisplay").textContent = `Nuovo round in ${countdown} s`;
-
-        // QUI: puoi implementare la chiamata API per nuovi holders
-        // es. fetchHoldersFromSolana();
-
-        if (countdown <= 0) {
-            clearInterval(countdownInterval);
-            startRound();
-        }
-    }, 1000);
 }
 
 animate();
