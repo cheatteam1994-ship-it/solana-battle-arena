@@ -21,7 +21,6 @@ let countdownInterval;
 // CONFIG API SOLANA (Helius)
 const API_KEY = '86cece6e-0608-40c1-9b6f-e44ef8764a4f';
 const TOKEN_ADDRESS = 'F6sFmPHVHbw3daG4SNX8BMuQ6W5sYsKmrYTvpZTupump';
-const HELIUS_API_URL = `https://api.helius.xyz/v0/tokens/${TOKEN_ADDRESS}/holders`;
 
 // ARRAY HOLDERS
 let holders = []; // unico array, niente redeclaration
@@ -30,7 +29,7 @@ let holders = []; // unico array, niente redeclaration
 let players = [];
 
 // -------------------------
-// CLASSE PLAYER
+// PLAYER CLASS
 // -------------------------
 class Player {
     constructor(wallet) {
@@ -75,7 +74,7 @@ class Player {
 }
 
 // -------------------------
-// CLASSE ENEMY
+// ENEMY CLASS
 // -------------------------
 class Enemy {
     constructor() {
@@ -154,24 +153,33 @@ class Bullet {
 let enemy = new Enemy();
 
 // -------------------------
-// FETCH HOLDERS DA HELIUS
+// FETCH HOLDERS DA HELIUS RPC
 // -------------------------
 async function fetchNewHolders() {
     try {
-        const response = await fetch(HELIUS_API_URL, {
-            headers: { 'X-API-KEY': API_KEY }
+        const response = await fetch(`https://mainnet.helius-rpc.com/?api-key=${API_KEY}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                jsonrpc: "2.0",
+                id: 1,
+                method: "getTokenLargestAccounts",
+                params: [TOKEN_ADDRESS]
+            })
         });
 
-        if (!response.ok) throw new Error('Errore nella richiesta API');
-
         const data = await response.json();
-        const newHolders = data.data.items.map(item => ({ wallet: item.owner }));
+
+        if (data.error) throw new Error(data.error.message);
+
+        const newHolders = data.result.value.map(item => ({ wallet: item.address }));
 
         const existingWallets = holders.map(h => h.wallet);
         const actuallyNew = newHolders.filter(h => !existingWallets.includes(h.wallet));
         holders.push(...actuallyNew);
 
         console.log(`📥 Nuovi holders arrivati: ${actuallyNew.length}`);
+
     } catch (error) {
         console.error('Errore durante il recupero degli holders:', error);
     }
@@ -181,7 +189,7 @@ async function fetchNewHolders() {
 // START ROUND
 // -------------------------
 async function startRound() {
-    await fetchNewHolders(); // aggiorna holders prima del round
+    await fetchNewHolders();
     roundActive = true;
     players = holders.map(h => new Player(h.wallet));
     roundStartTime = Date.now();
