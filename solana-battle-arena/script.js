@@ -12,14 +12,17 @@ const centerY = canvas.height / 2;
 const ROUND_DURATION = 180000; // 3 minuti
 const FIRE_RATE_BASE = 1000; // ms tra proiettili
 let FIRE_RATE = FIRE_RATE_BASE;
+
+let roundActive = true;
 let roundStartTime = Date.now();
+let countdown = 0;
+let countdownInterval;
 
 // PLAYER
 class Player {
     constructor(wallet) {
         this.wallet = wallet;
         this.radius = 15;
-        // spawn lontano dal centro
         const angle = Math.random() * 2 * Math.PI;
         const distance = 150 + Math.random() * 200;
         this.x = centerX + distance * Math.cos(angle);
@@ -28,26 +31,24 @@ class Player {
         this.speed = 1.5 + Math.random() * 1.5;
         this.alive = true;
 
-        // movimento naturale
         const moveAngle = Math.random() * 2 * Math.PI;
         this.vx = Math.cos(moveAngle) * this.speed;
         this.vy = Math.sin(moveAngle) * this.speed;
     }
 
     move() {
-        if (!this.alive) return;
+        if (!this.alive || !roundActive) return;
 
         this.x += this.vx;
         this.y += this.vy;
 
-        // rimbalzo sui bordi
         if (this.x < this.radius || this.x > canvas.width - this.radius) this.vx *= -1;
         if (this.y < this.radius || this.y > canvas.height - this.radius) this.vy *= -1;
     }
 
     draw() {
         if (!this.alive) return;
-        // cerchio
+
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
         ctx.fillStyle = "#00ffcc";
@@ -55,7 +56,6 @@ class Player {
         ctx.strokeStyle = "#fff";
         ctx.stroke();
 
-        // wallet abbreviato (prime 4 lettere)
         ctx.fillStyle = "#fff";
         ctx.font = "12px Arial";
         ctx.textAlign = "center";
@@ -75,6 +75,8 @@ class Enemy {
     }
 
     update() {
+        if (!roundActive) return;
+
         this.angle += 0.02;
         const now = Date.now();
         if (now - this.lastFire > FIRE_RATE) {
@@ -117,6 +119,8 @@ class Bullet {
     }
 
     update() {
+        if (!roundActive) return;
+
         this.x += Math.cos(this.angle) * this.speed;
         this.y += Math.sin(this.angle) * this.speed;
 
@@ -138,10 +142,12 @@ let players = [];
 let enemy = new Enemy();
 
 function startRound() {
+    roundActive = true;
     players = holders.map(h => new Player(h.wallet));
     roundStartTime = Date.now();
     FIRE_RATE = FIRE_RATE_BASE;
     document.getElementById("winnerDisplay").textContent = "";
+    if (countdownInterval) clearInterval(countdownInterval);
 }
 
 startRound();
@@ -151,8 +157,9 @@ function animate() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     const now = Date.now();
-    if (now - roundStartTime > 120000 && players.filter(p => p.alive).length > 1) {
-        FIRE_RATE = 400; // più veloce
+
+    if (roundActive && now - roundStartTime > 120000 && players.filter(p => p.alive).length > 1) {
+        FIRE_RATE = 400;
     }
 
     enemy.update();
@@ -174,18 +181,36 @@ function animate() {
 
     // check vincitore
     const alivePlayers = players.filter(p => p.alive);
-    if (alivePlayers.length === 1) {
-        document.getElementById("winnerDisplay").textContent = `Vincitore: ${alivePlayers[0].wallet}`;
-    } else if (alivePlayers.length === 0) {
-        document.getElementById("winnerDisplay").textContent = `Nessun vincitore`;
-    }
-
-    // nuovo round
-    if (now - roundStartTime > ROUND_DURATION) {
-        startRound();
+    if (roundActive && alivePlayers.length <= 1) {
+        roundActive = false;
+        if (alivePlayers.length === 1) {
+            document.getElementById("winnerDisplay").textContent = `Vincitore: ${alivePlayers[0].wallet}`;
+        } else {
+            document.getElementById("winnerDisplay").textContent = `Nessun vincitore`;
+        }
+        startCountdown();
     }
 
     requestAnimationFrame(animate);
+}
+
+// COUNTDOWN PER NUOVO ROUND
+function startCountdown() {
+    countdown = 180; // 3 minuti
+    document.getElementById("winnerDisplay").textContent += ` - Nuovo round in ${countdown} s`;
+
+    countdownInterval = setInterval(() => {
+        countdown--;
+        document.getElementById("winnerDisplay").textContent = `Nuovo round in ${countdown} s`;
+
+        // QUI: puoi implementare la chiamata API per nuovi holders
+        // es. fetchHoldersFromSolana();
+
+        if (countdown <= 0) {
+            clearInterval(countdownInterval);
+            startRound();
+        }
+    }, 1000);
 }
 
 animate();
