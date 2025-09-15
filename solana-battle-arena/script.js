@@ -1,8 +1,9 @@
 const canvas = document.getElementById("battleCanvas");
 const ctx = canvas.getContext("2d");
 
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+const container = document.getElementById("gameContainer");
+canvas.width = container.clientWidth;
+canvas.height = container.clientHeight;
 
 const centerX = canvas.width / 2;
 const centerY = canvas.height / 2;
@@ -18,36 +19,47 @@ class Player {
     constructor(wallet) {
         this.wallet = wallet;
         this.radius = 15;
-        this.x = Math.random() * canvas.width;
-        this.y = Math.random() * canvas.height;
         // spawn lontano dal centro
         const angle = Math.random() * 2 * Math.PI;
-        const distance = 200 + Math.random() * 200;
+        const distance = 150 + Math.random() * 200;
         this.x = centerX + distance * Math.cos(angle);
         this.y = centerY + distance * Math.sin(angle);
 
-        this.speed = 1 + Math.random() * 2;
+        this.speed = 1.5 + Math.random() * 1.5;
         this.alive = true;
+
+        // movimento naturale
+        const moveAngle = Math.random() * 2 * Math.PI;
+        this.vx = Math.cos(moveAngle) * this.speed;
+        this.vy = Math.sin(moveAngle) * this.speed;
     }
 
     move() {
         if (!this.alive) return;
-        const angle = Math.random() * 2 * Math.PI;
-        this.x += Math.cos(angle) * this.speed;
-        this.y += Math.sin(angle) * this.speed;
-        // stay inside canvas
-        this.x = Math.max(this.radius, Math.min(canvas.width - this.radius, this.x));
-        this.y = Math.max(this.radius, Math.min(canvas.height - this.radius, this.y));
+
+        this.x += this.vx;
+        this.y += this.vy;
+
+        // rimbalzo sui bordi
+        if (this.x < this.radius || this.x > canvas.width - this.radius) this.vx *= -1;
+        if (this.y < this.radius || this.y > canvas.height - this.radius) this.vy *= -1;
     }
 
     draw() {
         if (!this.alive) return;
+        // cerchio
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
         ctx.fillStyle = "#00ffcc";
         ctx.fill();
         ctx.strokeStyle = "#fff";
         ctx.stroke();
+
+        // wallet abbreviato (prime 4 lettere)
+        ctx.fillStyle = "#fff";
+        ctx.font = "12px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText(this.wallet.slice(0,4), this.x, this.y - this.radius - 5);
     }
 }
 
@@ -80,7 +92,6 @@ class Enemy {
     }
 
     draw() {
-        // nemico che ruota
         ctx.save();
         ctx.translate(this.x, this.y);
         ctx.rotate(this.angle);
@@ -108,6 +119,7 @@ class Bullet {
     update() {
         this.x += Math.cos(this.angle) * this.speed;
         this.y += Math.sin(this.angle) * this.speed;
+
         if (this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) {
             this.outOfBounds = true;
         }
@@ -139,7 +151,6 @@ function animate() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     const now = Date.now();
-    // aumenta rateo fuoco dopo 2 minuti se ci sono molti player
     if (now - roundStartTime > 120000 && players.filter(p => p.alive).length > 1) {
         FIRE_RATE = 400; // più veloce
     }
@@ -181,6 +192,6 @@ animate();
 
 // resize
 window.addEventListener("resize", () => {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    canvas.width = container.clientWidth;
+    canvas.height = container.clientHeight;
 });
