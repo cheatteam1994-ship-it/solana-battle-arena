@@ -23,7 +23,10 @@ const API_KEY = '86cece6e-0608-40c1-9b6f-e44ef8764a4f';
 const TOKEN_ADDRESS = 'F6sFmPHVHbw3daG4SNX8BMuQ6W5sYsKmrYTvpZTupump';
 const HELIUS_API_URL = `https://api.helius.xyz/v0/tokens/${TOKEN_ADDRESS}/holders`;
 
-// players array
+// ARRAY HOLDERS
+let holders = []; // inizializza vuoto, niente redeclaration
+
+// ARRAY PLAYERS
 let players = [];
 let enemy = new Enemy();
 
