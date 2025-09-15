@@ -20,7 +20,7 @@ let countdownInterval;
 
 // CONFIG API SOLANA (Helius)
 const API_KEY = '86cece6e-0608-40c1-9b6f-e44ef8764a4f';
-const TOKEN_ADDRESS = '9cqx5w7dcJC3yeoMSpUWnGeiY2Dsp5pHmUcaKySdpump';
+const TOKEN_ADDRESS = '986j8mhmidrcbx3wf1XJxsQFvWBMXg7gnDi3mejsr8H8';
 
 // ARRAY HOLDERS
 let holders = []; // unico array, niente redeclaration
