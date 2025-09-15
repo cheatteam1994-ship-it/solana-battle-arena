@@ -9,7 +9,7 @@ const centerX = canvas.width / 2;
 const centerY = canvas.height / 2;
 
 // CONFIG
-const ROUND_DURATION = 10000; // 10 secondi per test rapido
+const ROUND_DURATION = 10000; // 10 secondi per test
 const FIRE_RATE_BASE = 1000; // ms tra proiettili
 let FIRE_RATE = FIRE_RATE_BASE;
 
@@ -24,13 +24,14 @@ const TOKEN_ADDRESS = 'F6sFmPHVHbw3daG4SNX8BMuQ6W5sYsKmrYTvpZTupump';
 const HELIUS_API_URL = `https://api.helius.xyz/v0/tokens/${TOKEN_ADDRESS}/holders`;
 
 // ARRAY HOLDERS
-let holders = []; // inizializza vuoto, niente redeclaration
+let holders = []; // unico array, niente redeclaration
 
 // ARRAY PLAYERS
 let players = [];
-let enemy = new Enemy();
 
-// PLAYER CLASS
+// -------------------------
+// CLASSE PLAYER
+// -------------------------
 class Player {
     constructor(wallet) {
         this.wallet = wallet;
@@ -73,7 +74,9 @@ class Player {
     }
 }
 
-// ENEMY CLASS
+// -------------------------
+// CLASSE ENEMY
+// -------------------------
 class Enemy {
     constructor() {
         this.x = centerX;
@@ -115,7 +118,9 @@ class Enemy {
     }
 }
 
+// -------------------------
 // BULLET CLASS
+// -------------------------
 class Bullet {
     constructor(x, y, angle) {
         this.x = x;
@@ -143,7 +148,14 @@ class Bullet {
     }
 }
 
+// -------------------------
+// ISTANZIA IL NEMICO
+// -------------------------
+let enemy = new Enemy();
+
+// -------------------------
 // FETCH HOLDERS DA HELIUS
+// -------------------------
 async function fetchNewHolders() {
     try {
         const response = await fetch(HELIUS_API_URL, {
@@ -159,12 +171,15 @@ async function fetchNewHolders() {
         const actuallyNew = newHolders.filter(h => !existingWallets.includes(h.wallet));
         holders.push(...actuallyNew);
 
+        console.log(`📥 Nuovi holders arrivati: ${actuallyNew.length}`);
     } catch (error) {
         console.error('Errore durante il recupero degli holders:', error);
     }
 }
 
+// -------------------------
 // START ROUND
+// -------------------------
 async function startRound() {
     await fetchNewHolders(); // aggiorna holders prima del round
     roundActive = true;
@@ -173,9 +188,12 @@ async function startRound() {
     FIRE_RATE = FIRE_RATE_BASE;
     document.getElementById("winnerDisplay").textContent = "";
     if (countdownInterval) clearInterval(countdownInterval);
+    console.log("🏁 Round iniziato con", players.length, "giocatori");
 }
 
+// -------------------------
 // COUNTDOWN NUOVO ROUND
+// -------------------------
 function startCountdown() {
     countdown = ROUND_DURATION / 1000;
     updateCountdownDisplay();
@@ -195,7 +213,9 @@ function updateCountdownDisplay() {
         `Nuovo round in ${countdown} s | Prossimo giocatori: ${holders.length}`;
 }
 
+// -------------------------
 // GAME LOOP
+// -------------------------
 function animate() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     const now = Date.now();
@@ -232,7 +252,9 @@ function animate() {
 
 animate();
 
-// resize canvas
+// -------------------------
+// RESIZE CANVAS
+// -------------------------
 window.addEventListener("resize", () => {
     canvas.width = container.clientWidth;
     canvas.height = container.clientHeight;
