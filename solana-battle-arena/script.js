@@ -10,7 +10,7 @@ const centerY = canvas.height / 2;
 
 // CONFIG
 const ROUND_DURATION = 10000; // 10 secondi per test rapido
-const FIRE_RATE_BASE = 1000; // ms tra proiettili
+const FIRE_RATE_BASE = 100; // ms tra proiettili
 let FIRE_RATE = FIRE_RATE_BASE;
 
 let roundActive = true;
@@ -259,3 +259,4 @@ window.addEventListener("resize", () => {
     canvas.width = container.clientWidth;
     canvas.height = container.clientHeight;
 });
+
