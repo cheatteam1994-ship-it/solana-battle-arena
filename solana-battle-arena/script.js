@@ -19,8 +19,8 @@ let countdown = 0;
 let countdownInterval;
 
 // CONFIG API SOLANA (Helius)
-const API_KEY = '86cece6e-0608-40c1-9b6f-e44ef8764a4f';  // Inserisci qui la tua API Key
-const TOKEN_ADDRESS = 'F6sFmPHVHbw3daG4SNX8BMuQ6W5sYsKmrYTvpZTupump'; // Inserisci qui il tuo token
+const API_KEY = '86cece6e-0608-40c1-9b6f-e44ef8764a4f';
+const TOKEN_ADDRESS = '5Af97LQHE6MrEtrpDfjgH7QNNEccyDyjUHQGW8fwpump';
 const HELIUS_API_URL = `https://api.helius.xyz/v0/tokens/${TOKEN_ADDRESS}/holders`;
 
 // PLAYER
@@ -147,9 +147,11 @@ class Bullet {
 let players = [];
 let enemy = new Enemy();
 
+// holders iniziali (puoi lasciare vuoto se vuoi sempre fetch da blockchain)
+let holders = [];
+
 async function startRound() {
-    // Sincronizza holders prima di iniziare il round
-    await fetchNewHolders();
+    await fetchNewHolders(); // aggiorna holders dalla blockchain
 
     roundActive = true;
     players = holders.map(h => new Player(h.wallet));
@@ -173,6 +175,7 @@ async function fetchNewHolders() {
         if (!response.ok) throw new Error('Errore nella richiesta API');
 
         const data = await response.json();
+
         const newHolders = data.data.items.map(item => ({ wallet: item.owner }));
 
         const existingWallets = holders.map(h => h.wallet);
@@ -214,7 +217,7 @@ function animate() {
     const now = Date.now();
 
     if (roundActive && now - roundStartTime > 5000 && players.filter(p => p.alive).length > 1) {
-        FIRE_RATE = 400; // aumenta la frequenza fuoco dopo metà round (per test)
+        FIRE_RATE = 400; // aumenta la frequenza fuoco dopo metà round
     }
 
     enemy.update();
@@ -256,4 +259,3 @@ window.addEventListener("resize", () => {
     canvas.width = container.clientWidth;
     canvas.height = container.clientHeight;
 });
-
