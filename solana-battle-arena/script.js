@@ -9,7 +9,7 @@ const centerX = canvas.width / 2;
 const centerY = canvas.height / 2;
 
 // CONFIG
-const ROUND_DURATION = 180000; // 3 minuti
+const ROUND_DURATION = 10000; // 10 secondi per test rapido
 const FIRE_RATE_BASE = 1000; // ms tra proiettili
 let FIRE_RATE = FIRE_RATE_BASE;
 
@@ -19,8 +19,8 @@ let countdown = 0;
 let countdownInterval;
 
 // CONFIG API SOLANA (Helius)
-const API_KEY = '86cece6e-0608-40c1-9b6f-e44ef8764a4f';  // Inserisci qui la tua API Key
-const TOKEN_ADDRESS = 'F6sFmPHVHbw3daG4SNX8BMuQ6W5sYsKmrYTvpZTupump'; // Inserisci qui il tuo token
+const API_KEY = 'LA_TUA_API_KEY';  // Inserisci qui la tua API Key
+const TOKEN_ADDRESS = 'INDIRIZZO_DEL_TUO_TOKEN'; // Inserisci qui il tuo token
 const HELIUS_API_URL = `https://api.helius.xyz/v0/tokens/${TOKEN_ADDRESS}/holders`;
 
 // PLAYER
@@ -147,7 +147,10 @@ class Bullet {
 let players = [];
 let enemy = new Enemy();
 
-function startRound() {
+async function startRound() {
+    // Sincronizza holders prima di iniziare il round
+    await fetchNewHolders();
+
     roundActive = true;
     players = holders.map(h => new Player(h.wallet));
     roundStartTime = Date.now();
@@ -177,11 +180,6 @@ async function fetchNewHolders() {
 
         holders.push(...actuallyNew);
 
-        if (actuallyNew.length > 0) {
-            document.getElementById("winnerDisplay").textContent += 
-            ` | Nuovi partecipanti: ${actuallyNew.length}`;
-        }
-
     } catch (error) {
         console.error('Errore durante il recupero degli holders:', error);
     }
@@ -189,16 +187,12 @@ async function fetchNewHolders() {
 
 // COUNTDOWN PER NUOVO ROUND
 function startCountdown() {
-    countdown = 180; // 3 minuti
-    document.getElementById("winnerDisplay").textContent += ` | Nuovo round in ${countdown} s`;
+    countdown = ROUND_DURATION / 1000; // 10 secondi
+    updateCountdownDisplay();
 
     countdownInterval = setInterval(() => {
         countdown--;
-        document.getElementById("winnerDisplay").textContent = `Nuovo round in ${countdown} s`;
-
-        if (countdown === 175) { // subito dopo inizio countdown
-            fetchNewHolders();
-        }
+        updateCountdownDisplay();
 
         if (countdown <= 0) {
             clearInterval(countdownInterval);
@@ -207,14 +201,20 @@ function startCountdown() {
     }, 1000);
 }
 
+// FUNZIONE PER AGGIORNARE IL DISPLAY DEL COUNTDOWN E NUMERO GIOCATORI
+function updateCountdownDisplay() {
+    document.getElementById("winnerDisplay").textContent = 
+        `Nuovo round in ${countdown} s | Prossimo giocatori: ${holders.length}`;
+}
+
 // GAME LOOP
 function animate() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     const now = Date.now();
 
-    if (roundActive && now - roundStartTime > 120000 && players.filter(p => p.alive).length > 1) {
-        FIRE_RATE = 400;
+    if (roundActive && now - roundStartTime > 5000 && players.filter(p => p.alive).length > 1) {
+        FIRE_RATE = 400; // aumenta la frequenza fuoco dopo metà round (per test)
     }
 
     enemy.update();
