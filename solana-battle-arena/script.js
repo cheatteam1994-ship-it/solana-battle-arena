@@ -9,8 +9,8 @@ const centerX = canvas.width / 2;
 const centerY = canvas.height / 2;
 
 // CONFIG
-const ROUND_DURATION = 10000; // 10 secondi per test
-const FIRE_RATE_BASE = 1000; // ms tra proiettili
+const ROUND_DURATION = 10000; // 10 seconds for testing
+const FIRE_RATE_BASE = 1000; // ms between bullets
 let FIRE_RATE = FIRE_RATE_BASE;
 
 let roundActive = true;
@@ -23,7 +23,7 @@ const API_KEY = '86cece6e-0608-40c1-9b6f-e44ef8764a4f';
 const TOKEN_ADDRESS = '986j8mhmidrcbx3wf1XJxsQFvWBMXg7gnDi3mejsr8H8';
 
 // ARRAY HOLDERS
-let holders = []; // unico array, niente redeclaration
+let holders = [];
 
 // ARRAY PLAYERS
 let players = [];
@@ -35,23 +35,10 @@ class Player {
     constructor(wallet) {
         this.wallet = wallet;
         this.radius = 15;
-
-        // Spawn con margine dai bordi
-        const margin = 50;
-        let valid = false;
-        while (!valid) {
-            const angle = Math.random() * 2 * Math.PI;
-            const distance = 150 + Math.random() * 200;
-            this.x = centerX + distance * Math.cos(angle);
-            this.y = centerY + distance * Math.sin(angle);
-
-            if (
-                this.x > margin && this.x < canvas.width - margin &&
-                this.y > margin && this.y < canvas.height - margin
-            ) {
-                valid = true;
-            }
-        }
+        const angle = Math.random() * 2 * Math.PI;
+        const distance = 200 + Math.random() * 200; // spawn a bit farther from edges
+        this.x = Math.min(Math.max(centerX + distance * Math.cos(angle), this.radius + 10), canvas.width - this.radius - 10);
+        this.y = Math.min(Math.max(centerY + distance * Math.sin(angle), this.radius + 10), canvas.height - this.radius - 10);
 
         this.speed = 1.5 + Math.random() * 1.5;
         this.alive = true;
@@ -66,7 +53,7 @@ class Player {
         this.x += this.vx;
         this.y += this.vy;
 
-        // Rimbalzo robusto sui bordi
+        // bounce off walls
         if (this.x < this.radius) { this.x = this.radius; this.vx *= -1; }
         if (this.x > canvas.width - this.radius) { this.x = canvas.width - this.radius; this.vx *= -1; }
         if (this.y < this.radius) { this.y = this.radius; this.vy *= -1; }
@@ -164,12 +151,12 @@ class Bullet {
 }
 
 // -------------------------
-// ISTANZIA IL NEMICO
+// ENEMY INSTANCE
 // -------------------------
 let enemy = new Enemy();
 
 // -------------------------
-// FETCH HOLDERS DA HELIUS RPC
+// FETCH HOLDERS (TOP 500)
 // -------------------------
 async function fetchNewHolders() {
     try {
@@ -185,19 +172,17 @@ async function fetchNewHolders() {
         });
 
         const data = await response.json();
-
         if (data.error) throw new Error(data.error.message);
 
-        const newHolders = data.result.value.slice(0, 100).map(item => ({ wallet: item.address }));
+        const newHolders = data.result.value.slice(0, 500).map(item => ({ wallet: item.address }));
 
         const existingWallets = holders.map(h => h.wallet);
         const actuallyNew = newHolders.filter(h => !existingWallets.includes(h.wallet));
         holders.push(...actuallyNew);
 
-        console.log(`📥 Nuovi holders arrivati: ${actuallyNew.length}`);
-
+        console.log(`📥 Top 500 holders fetched: ${actuallyNew.length} new`);
     } catch (error) {
-        console.error('Errore durante il recupero degli holders:', error);
+        console.error('Error fetching holders:', error);
     }
 }
 
@@ -210,13 +195,15 @@ async function startRound() {
     players = holders.map(h => new Player(h.wallet));
     roundStartTime = Date.now();
     FIRE_RATE = FIRE_RATE_BASE;
-    document.getElementById("winnerDisplay").textContent = "";
+    const winnerDisplay = document.getElementById("winnerDisplay");
+    winnerDisplay.textContent = "";
+    winnerDisplay.classList.remove("show");
     if (countdownInterval) clearInterval(countdownInterval);
-    console.log("🏁 Round iniziato con", players.length, "giocatori");
+    console.log("🏁 Round started with", players.length, "players");
 }
 
 // -------------------------
-// COUNTDOWN NUOVO ROUND
+// COUNTDOWN TO NEXT ROUND
 // -------------------------
 function startCountdown() {
     countdown = ROUND_DURATION / 1000;
@@ -233,8 +220,8 @@ function startCountdown() {
 }
 
 function updateCountdownDisplay() {
-    document.getElementById("winnerDisplay").textContent = 
-        `Nuovo round in ${countdown} s | Prossimo giocatori: ${holders.length}`;
+    document.getElementById("winnerDisplay").textContent =
+        `Next round in ${countdown}s | Next players: ${holders.length}`;
 }
 
 // -------------------------
@@ -261,13 +248,17 @@ function animate() {
     });
 
     const alivePlayers = players.filter(p => p.alive);
+    const winnerDisplay = document.getElementById("winnerDisplay");
+
     if (roundActive && alivePlayers.length <= 1) {
         roundActive = false;
         if (alivePlayers.length === 1) {
-            document.getElementById("winnerDisplay").textContent = `Vincitore: ${alivePlayers[0].wallet}`;
+            winnerDisplay.textContent = `🏆 Winner: ${alivePlayers[0].wallet}`;
         } else {
-            document.getElementById("winnerDisplay").textContent = `Nessun vincitore`;
+            winnerDisplay.textContent = `No winner this round`;
         }
+        winnerDisplay.classList.add("show");
+        setTimeout(() => winnerDisplay.classList.remove("show"), 3500);
         startCountdown();
     }
 
