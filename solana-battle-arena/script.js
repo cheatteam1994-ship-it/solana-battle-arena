@@ -10,7 +10,7 @@ const centerY = canvas.height / 2;
 
 // CONFIG
 const ROUND_DURATION = 10000; // 10 seconds for testing
-const FIRE_RATE_BASE = 100; // ms between bullets
+const FIRE_RATE_BASE = 1000; // ms between bullets
 let FIRE_RATE = FIRE_RATE_BASE;
 
 let roundActive = true;
@@ -28,6 +28,10 @@ let holders = [];
 // ARRAY PLAYERS
 let players = [];
 
+// DISPLAY ELEMENTS
+const countdownDisplay = document.getElementById("countdownDisplay");
+const winnerDisplay = document.getElementById("winnerDisplay");
+
 // -------------------------
 // PLAYER CLASS
 // -------------------------
@@ -36,7 +40,7 @@ class Player {
         this.wallet = wallet;
         this.radius = 15;
         const angle = Math.random() * 2 * Math.PI;
-        const distance = 200 + Math.random() * 200; // spawn a bit farther from edges
+        const distance = 200 + Math.random() * 200;
         this.x = Math.min(Math.max(centerX + distance * Math.cos(angle), this.radius + 10), canvas.width - this.radius - 10);
         this.y = Math.min(Math.max(centerY + distance * Math.sin(angle), this.radius + 10), canvas.height - this.radius - 10);
 
@@ -195,10 +199,10 @@ async function startRound() {
     players = holders.map(h => new Player(h.wallet));
     roundStartTime = Date.now();
     FIRE_RATE = FIRE_RATE_BASE;
-    const winnerDisplay = document.getElementById("winnerDisplay");
-    winnerDisplay.textContent = "";
+
     winnerDisplay.classList.remove("show");
-    if (countdownInterval) clearInterval(countdownInterval);
+    countdownDisplay.style.opacity = 0; // hide countdown at start
+
     console.log("🏁 Round started with", players.length, "players");
 }
 
@@ -208,6 +212,7 @@ async function startRound() {
 function startCountdown() {
     countdown = ROUND_DURATION / 1000;
     updateCountdownDisplay();
+    countdownDisplay.style.opacity = 1; // show countdown
 
     countdownInterval = setInterval(() => {
         countdown--;
@@ -220,8 +225,7 @@ function startCountdown() {
 }
 
 function updateCountdownDisplay() {
-    document.getElementById("winnerDisplay").textContent =
-        `Next round in ${countdown}s | Next players: ${holders.length}`;
+    countdownDisplay.textContent = `Next round in ${countdown}s | Next players: ${holders.length}`;
 }
 
 // -------------------------
@@ -248,7 +252,6 @@ function animate() {
     });
 
     const alivePlayers = players.filter(p => p.alive);
-    const winnerDisplay = document.getElementById("winnerDisplay");
 
     if (roundActive && alivePlayers.length <= 1) {
         roundActive = false;
@@ -258,7 +261,7 @@ function animate() {
             winnerDisplay.textContent = `No winner this round`;
         }
         winnerDisplay.classList.add("show");
-        setTimeout(() => winnerDisplay.classList.remove("show"), 3500);
+
         startCountdown();
     }
 
