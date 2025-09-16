@@ -4,9 +4,17 @@ body {
     color: #fff;
     font-family: Arial, sans-serif;
     display: flex;
-    justify-content: center;
+    flex-direction: column;
     align-items: center;
     height: 100vh;
+}
+
+#title {
+    margin-top: 20px;
+    font-size: 2rem;
+    text-align: center;
+    color: #00ffcc;
+    text-shadow: 0 0 5px #00ffcc;
 }
 
 #gameContainer {
@@ -18,6 +26,7 @@ body {
     border-radius: 15px;
     overflow: hidden;
     background: #111;
+    margin-top: 20px;
 }
 
 canvas {
@@ -26,26 +35,37 @@ canvas {
     height: 100%;
 }
 
-/* Winner / Countdown text */
+/* Countdown / Next Round */
+#countdownDisplay {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #00ffcc;
+    text-align: center;
+    z-index: 10;
+    opacity: 1;
+    transition: opacity 0.5s ease;
+}
+
+/* Winner message */
 #winnerDisplay {
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    font-size: 28px;
+    font-size: 2rem;
     font-weight: bold;
     color: #00ffcc;
     opacity: 0;
-    transition: opacity 0.6s ease-in-out;
     text-align: center;
     z-index: 10;
+    text-shadow: 0 0 10px #00ffcc, 0 0 20px #00ffcc;
+    transition: opacity 0.5s ease;
 }
 
 #winnerDisplay.show {
     opacity: 1;
-}
-
-/* Optional: Glow effect for the winner text */
-#winnerDisplay.show {
-    text-shadow: 0 0 10px #00ffcc, 0 0 20px #00ffcc;
 }
