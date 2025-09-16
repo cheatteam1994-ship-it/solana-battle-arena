@@ -10,7 +10,7 @@ const centerY = canvas.height / 2;
 
 // CONFIG
 const ROUND_DURATION = 10000; // 10 seconds for testing
-const FIRE_RATE_BASE = 1000; // ms between bullets
+const FIRE_RATE_BASE = 100; // ms between bullets
 let FIRE_RATE = FIRE_RATE_BASE;
 
 let roundActive = true;
