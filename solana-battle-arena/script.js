@@ -35,10 +35,23 @@ class Player {
     constructor(wallet) {
         this.wallet = wallet;
         this.radius = 15;
-        const angle = Math.random() * 2 * Math.PI;
-        const distance = 150 + Math.random() * 200;
-        this.x = centerX + distance * Math.cos(angle);
-        this.y = centerY + distance * Math.sin(angle);
+
+        // Spawn con margine dai bordi
+        const margin = 50;
+        let valid = false;
+        while (!valid) {
+            const angle = Math.random() * 2 * Math.PI;
+            const distance = 150 + Math.random() * 200;
+            this.x = centerX + distance * Math.cos(angle);
+            this.y = centerY + distance * Math.sin(angle);
+
+            if (
+                this.x > margin && this.x < canvas.width - margin &&
+                this.y > margin && this.y < canvas.height - margin
+            ) {
+                valid = true;
+            }
+        }
 
         this.speed = 1.5 + Math.random() * 1.5;
         this.alive = true;
@@ -53,8 +66,11 @@ class Player {
         this.x += this.vx;
         this.y += this.vy;
 
-        if (this.x < this.radius || this.x > canvas.width - this.radius) this.vx *= -1;
-        if (this.y < this.radius || this.y > canvas.height - this.radius) this.vy *= -1;
+        // Rimbalzo robusto sui bordi
+        if (this.x < this.radius) { this.x = this.radius; this.vx *= -1; }
+        if (this.x > canvas.width - this.radius) { this.x = canvas.width - this.radius; this.vx *= -1; }
+        if (this.y < this.radius) { this.y = this.radius; this.vy *= -1; }
+        if (this.y > canvas.height - this.radius) { this.y = canvas.height - this.radius; this.vy *= -1; }
     }
 
     draw() {
@@ -69,7 +85,7 @@ class Player {
         ctx.fillStyle = "#fff";
         ctx.font = "12px Arial";
         ctx.textAlign = "center";
-        ctx.fillText(this.wallet.slice(0,4), this.x, this.y - this.radius - 5);
+        ctx.fillText(this.wallet.slice(0, 4), this.x, this.y - this.radius - 5);
     }
 }
 
@@ -172,7 +188,7 @@ async function fetchNewHolders() {
 
         if (data.error) throw new Error(data.error.message);
 
-        const newHolders = data.result.value.map(item => ({ wallet: item.address }));
+        const newHolders = data.result.value.slice(0, 100).map(item => ({ wallet: item.address }));
 
         const existingWallets = holders.map(h => h.wallet);
         const actuallyNew = newHolders.filter(h => !existingWallets.includes(h.wallet));
